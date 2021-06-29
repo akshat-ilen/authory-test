@@ -1,0 +1,9 @@
+version: "3"
+services:
+  authory_test_db:
+    image: "postgres:13"
+    container_name: "authory_test_db"
+    ports:
+      - "54321:5432"
+    environment:
+      POSTGRES_PASSWORD: root123
