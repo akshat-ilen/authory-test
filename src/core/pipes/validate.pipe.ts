@@ -19,8 +19,4 @@ export class ValidateInputPipe extends ValidationPipe {
       }
     }
   }
-
-  private handleError(errors) {
-    return errors;
-  }
 }

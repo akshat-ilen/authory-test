@@ -7,6 +7,7 @@ export class ShareCountHistoryEntity {
   @PrimaryGeneratedColumn()
   public id: number;
 
+  // Created index where we want to filter out based on articleId
   @Index()
   @Column({ type: 'int4', nullable: true })
   public articleId: number;
@@ -17,7 +18,7 @@ export class ShareCountHistoryEntity {
   @Column({ enum: SiteEnum })
   public site: SiteEnum;
 
-  @Index()
+  @Index() // Created index where we want to filter out based on timestamp
   @Column({ type: 'timestamptz', nullable: false })
   public timestamp: Date;
 }

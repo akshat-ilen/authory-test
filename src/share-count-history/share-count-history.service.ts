@@ -14,9 +14,10 @@ export class ShareCountHistoryService {
   ) {}
 
   async findAll(
-    params: AnalyticsQueryParamsDto,
+    queryParams: AnalyticsQueryParamsDto,
   ): Promise<AnalyticsResponseDto[]> {
-    if (params.from > params.to) {
+    // Checking condition if from from date is larger than to date
+    if (queryParams.from > queryParams.to) {
       throw new UnprocessableEntityException(
         'From date cannot be greater than To date',
       );
@@ -31,15 +32,21 @@ export class ShareCountHistoryService {
           SUM(CASE WHEN t."site" = 'linkedin_comments' OR t."site" = 'linkedin_reactions' THEN t."count" ELSE 0 END) "linkedin",
           SUM(t."count") "all"
         FROM public."ShareCountHistory" t
-        ${this.whereConditionQuery(params)}
+        ${this.whereConditionQuery(queryParams)}
         GROUP BY t."articleId"
-        ORDER BY "${params.orderBy || 'all'}" DESC;
+        ORDER BY "${queryParams.orderBy || 'all'}" DESC;
       `,
     );
 
+    // Transforming the result to AnalyticsResponseDto (converting string to numbers)
     return plainToClass(AnalyticsResponseDto, rawResult as []);
   }
 
+  /**
+   * This function returns the formatted where condition clause based on query parameters
+   * @param params: AnalyticsQueryParamsDto
+   * @returns string
+   */
   private whereConditionQuery(params: AnalyticsQueryParamsDto): string {
     let timeStampCondition = '';
     if (params.from && params.to) {
