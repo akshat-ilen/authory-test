@@ -25,16 +25,20 @@ export class ShareCountHistoryService {
 
     const rawResult = await this.shareCountRepo.query(
       `
-        SELECT t."articleId" Id,
-          SUM(CASE WHEN t."site" = 'twitter' THEN t."count" ELSE 0 END) "twitter",
-          SUM(CASE WHEN t."site" = 'facebook' THEN t."count" ELSE 0 END) "facebook",
-          SUM(CASE WHEN t."site" = 'pinterest' THEN t."count" ELSE 0 END) "pinterest",
-          SUM(CASE WHEN t."site" = 'linkedin_comments' OR t."site" = 'linkedin_reactions' THEN t."count" ELSE 0 END) "linkedin",
-          SUM(t."count") "all"
+      SELECT  T."articleId",
+        MAX(CASE WHEN T."site" = 'facebook' THEN T."share_count" ELSE 0 END)  "facebook",
+        MAX(CASE WHEN T."site" = 'twitter' THEN T."share_count" ELSE 0 END)   "twitter",
+        MAX(CASE WHEN T."site" = 'pinterest' THEN T."share_count" ELSE 0 END) "pinterest",
+        sum(CASE WHEN t."site" = 'linkedin_comments' or t."site" = 'linkedin_reactions' THEN t."count" ELSE 0 END) "linkedin",
+        sum(T."count") "all"
+      FROM (
+        SELECT t."articleId", t."site", t."count",
+          ABS(FIRST_VALUE(t."count") OVER (PARTITION BY t."articleId", t."site" ORDER BY t."timestamp" RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) -
+              LAST_VALUE(t."count") OVER (PARTITION BY t."articleId", t."site" ORDER BY t."timestamp" RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)) share_count
         FROM public."ShareCountHistory" t
-        ${this.whereConditionQuery(queryParams)}
-        GROUP BY t."articleId"
-        ORDER BY "${queryParams.orderBy || 'all'}" DESC;
+        ${this.whereConditionQuery(queryParams)}) as T
+      GROUP BY T."articleId"
+      ORDER BY "${queryParams.orderBy || 'all'}" DESC;
       `,
     );
 
