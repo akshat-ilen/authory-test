@@ -3,6 +3,7 @@ import { SiteEnum } from './enums/site.enum';
 
 @Entity({ name: 'ShareCountHistory' })
 @Index(['articleId', 'timestamp'])
+@Index(['articleId', 'site'])
 export class ShareCountHistoryEntity {
   @PrimaryGeneratedColumn()
   public id: number;

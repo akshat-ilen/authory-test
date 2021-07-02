@@ -23,14 +23,19 @@ export class ShareCountHistoryService {
       );
     }
 
+    const facebookCondition = `MAX(CASE WHEN T."site" = 'facebook' THEN T."share_count" ELSE 0 END)`;
+    const twitterCondition = `MAX(CASE WHEN T."site" = 'twitter' THEN T."share_count" ELSE 0 END)`;
+    const pinterestCondition = `MAX(CASE WHEN T."site" = 'pinterest' THEN T."share_count" ELSE 0 END)`;
+    const linkedinCondition = `sum(CASE WHEN t."site" = 'linkedin_comments' or t."site" = 'linkedin_reactions' THEN t."count" ELSE 0 END)`;
+
     const rawResult = await this.shareCountRepo.query(
       `
       SELECT  T."articleId",
-        MAX(CASE WHEN T."site" = 'facebook' THEN T."share_count" ELSE 0 END)  "facebook",
-        MAX(CASE WHEN T."site" = 'twitter' THEN T."share_count" ELSE 0 END)   "twitter",
-        MAX(CASE WHEN T."site" = 'pinterest' THEN T."share_count" ELSE 0 END) "pinterest",
-        sum(CASE WHEN t."site" = 'linkedin_comments' or t."site" = 'linkedin_reactions' THEN t."count" ELSE 0 END) "linkedin",
-        sum(T."count") "all"
+        ${facebookCondition} "facebook",
+        ${twitterCondition} "twitter",
+        ${pinterestCondition} "pinterest",
+        ${linkedinCondition} "linkedin",
+        ((${facebookCondition}) + (${twitterCondition}) + (${pinterestCondition}) + (${linkedinCondition})) "all"
       FROM (
         SELECT t."articleId", t."site", t."count",
           ABS(FIRST_VALUE(t."count") OVER (PARTITION BY t."articleId", t."site" ORDER BY t."timestamp" RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) -
